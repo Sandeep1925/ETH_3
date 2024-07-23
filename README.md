@@ -2,10 +2,10 @@
 MyToken Smart Contract
 
 ## Problem Statement
-Create a basictoken named MyToken with minting, transferring, and burning functionality. This contract allows the owner to mint new tokens, users to transfer tokens to each other, and any token holder to burn their tokens.
+Create a ERC20 token named MyToken with minting, transferring, and burning functionality. This contract allows the owner to mint new tokens, users to transfer tokens to each other, and any token holder to burn their tokens.
 
 ## Prerequisites
-Solidity ^0.8.0
+Solidity ^0.8.20
 
 
 ## Description  
@@ -26,63 +26,47 @@ Once you are on the Remix website, create a new file by clicking on the "+" icon
 
 ```javascript
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-contract MyToken {
-    uint256 public totalSupply;
-    string public name;
-    string public symbol;
-    address public owner;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-    mapping(address => uint256) public balances;
+contract MyToken is ERC20, Ownable {
 
-    event Transfer(address indexed from, address indexed to, uint256 amount);
     event Mint(address indexed to, uint256 amount);
     event Burn(address indexed from, uint256 amount);
 
-    constructor(string memory _name, string memory _symbol, address _owner) {
-        name = _name;
-        symbol = _symbol;
-        owner = _owner;
-        totalSupply = 1000000;
-        balances[msg.sender] = totalSupply;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can call this function");
-        _;
+    constructor(string memory _name, string memory _symbol, address initialOwner) 
+        ERC20(_name, _symbol) 
+        Ownable(initialOwner) // Pass the initialOwner to the Ownable constructor
+    {
+        _mint(initialOwner, 100 * 10 ** decimals()); // Mint initial supply to the initialOwner
     }
 
     function mint(address to, uint256 amount) public onlyOwner {
         require(amount > 0, "Amount must be greater than zero");
-        balances[to] += amount;
-        totalSupply += amount;
+        _mint(to, amount);
         emit Mint(to, amount);
-        emit Transfer(address(0), to, amount);
     }
 
     function burn(uint256 amount) public {
         require(amount > 0, "Amount must be greater than zero");
-        require(balances[msg.sender] >= amount, "Not enough tokens to burn");
-        balances[msg.sender] -= amount;
-        totalSupply -= amount;
+        _burn(msg.sender, amount);
         emit Burn(msg.sender, amount);
-        emit Transfer(msg.sender, address(0), amount);
     }
 
-    function transfer(address to, uint256 amount) public {
+    function transfer(address to, uint256 amount) public override returns (bool) {
         require(amount > 0, "Amount must be greater than zero");
-        require(balances[msg.sender] >= amount, "Not enough tokens to transfer");
-        balances[msg.sender] -= amount;
-        balances[to] += amount;
-        emit Transfer(msg.sender, to, amount);
+        require(balanceOf(msg.sender) >= amount, "Not enough tokens to transfer");
+        _transfer(msg.sender, to, amount);
+        return true; // Return true as per ERC20 standard
     }
 
     function getBalance(address account) public view returns (uint256) {
-        return balances[account];
+        return balanceOf(account);
     }
 }
-
 
 ```
 
@@ -93,8 +77,8 @@ contract MyToken {
 
 #### For Remix:    
 1. Open Remix IDE.
-2. Create and upload a new file named MyToken.sol.
-3. Copy and paste the provided Solidity code into MyToken.sol.
+2. Create and upload a new file named Assesment.sol.
+3. Copy and paste the provided Solidity code into Assesment.sol.
 4. Compile the contract .
 5. Deploy the contract. 
 
